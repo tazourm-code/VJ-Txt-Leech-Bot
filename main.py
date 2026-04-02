@@ -1,3 +1,7 @@
+# Don't Remove Credit Tg - @VJ_Bots
+# Subscribe YouTube Channel For Amazing Bot https://youtube.com/@Tech_VJ
+# Ask Doubt on telegram @KingVJ01
+
 import os, sys, time, asyncio, subprocess
 import core as helper
 from vars import API_ID, API_HASH, BOT_TOKEN
@@ -30,14 +34,13 @@ async def direct_download(bot, m):
     
     name = f"video_{int(time.time())}"
     
-    # Bunny Net, Vimeo এবং সিকিউরড লিঙ্কের জন্য হেডার
+    # Header Setup
     headers = '--user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" '
     if "b-cdn.net" in url or "iframe.mediadelivery.net" in url:
         headers += '--referer "https://iframe.mediadelivery.net/" '
     elif "vimeo" in url:
         headers += '--referer "https://vimeo.com/" '
     
-    # ৩৬০পি ফরম্যাট এবং হেডারসহ yt-dlp কমান্ড
     cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {headers} "{url}" -o "{name}.mp4"'
     
     try:
@@ -71,8 +74,8 @@ async def upload_file(bot, m):
             try:
                 n, u = links[i][0].strip(), "https://" + links[i][1].strip()
                 out = f"{str(i+1).zfill(3)}) {n}"[:50]
-                headers = '--referer "https://iframe.mediadelivery.net/" if "b-cdn.net" in u else ""'
-                cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {headers} "{u}" -o "{out}.mp4"'
+                h = '--referer "https://iframe.mediadelivery.net/" ' if "b-cdn.net" in u else ""
+                cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {h} "{u}" -o "{out}.mp4"'
                 
                 p = await m.reply_text(f"📥 ডাউনলোড হচ্ছে: {n}")
                 res = await helper.download_video(u, cmd, out)
@@ -86,4 +89,3 @@ async def upload_file(bot, m):
 if __name__ == "__main__":
     bot.run()
     
-            
