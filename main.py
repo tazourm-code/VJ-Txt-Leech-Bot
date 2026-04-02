@@ -1,9 +1,25 @@
 # Don't Remove Credit Tg - @VJ_Bots
 import os, sys, time, asyncio
 import core as helper
-from vars import API_ID, API_HASH, BOT_TOKEN
 from pyromod import listen
 from pyrogram import Client, filters
+from flask import Flask
+from threading import Thread
+
+# সরাসরি আপনার আইডিগুলো এখানে বসিয়ে দেওয়া হয়েছে
+API_ID = 32681138
+API_HASH = "c809aa4537888310e0f29e49afe13466"
+BOT_TOKEN = "8752628916:AAGeJwdqtWIuwZImPK_H6VwEDuJwgdOqTDw"
+
+# Render-কে সচল রাখতে এবং 502 Bad Gateway ফিক্স করতে ছোট ওয়েব সার্ভার
+app = Flask(__name__)
+@app.route('/')
+def hello_world():
+    return 'Bot is Running - Tech VJ'
+
+def run_web():
+    # সরাসরি ১০০০০ পোর্টে রান হবে যাতে রেন্ডার খুঁজে পায়
+    app.run(host='0.0.0.0', port=10000)
 
 bot = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
@@ -20,14 +36,14 @@ async def direct_download(bot, m):
     msg = await m.reply_text("🔎 **লিঙ্ক চেক করছি...**")
     name = f"video_{int(time.time())}"
     
-    # পাওয়ারফুল হেডার (১৫০০ টাকার বটের সিক্রেট)
+    # পাওয়ারফুল হেডার (সব প্ল্যাটফর্ম বাইপাস করতে)
     headers = [
         '--user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"',
         '--no-check-certificate',
         '--geo-bypass'
     ]
     
-    # সঠিক Referer সেট করা (যাতে ভিমো বা বানি কাজ করে)
+    # সঠিক Referer লজিক
     if "b-cdn.net" in url or "mediadelivery.net" in url:
         headers.append('--referer "https://iframe.mediadelivery.net/"')
     elif "vimeo" in url:
@@ -48,7 +64,7 @@ async def direct_download(bot, m):
             await msg.edit_text("✅ **ডাউনলোড শেষ! এখন আপলোড হচ্ছে...**")
             await helper.send_vid(bot, m, f"🎬 **Owner:** @TG_Classes", res_file, "no", name, msg)
         else:
-            await msg.edit_text("❌ লিঙ্কটি প্রোটেক্টেড। পাইথন ভার্সন ৩.১০ বা কুকি চেক করুন।")
+            await msg.edit_text("❌ লিঙ্কটি প্রোটেক্টেড অথবা কাজ করছে না।")
     except Exception as e:
         await msg.edit_text(f"❌ এরর: `{str(e)[:150]}`")
 
@@ -72,7 +88,6 @@ async def upload_file(bot, m):
                 n, u = links[i][0].strip(), "https://" + links[i][1].strip()
                 out = f"{str(i+1).zfill(3)}) {n}"[:50]
                 
-                # লুপের ভেতরেও রেফারার লজিক
                 h = '--referer "https://iframe.mediadelivery.net/" ' if "b-cdn.net" in u else ""
                 cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {h} "{u}" -o "{out}.mp4"'
                 
@@ -84,5 +99,7 @@ async def upload_file(bot, m):
         await editable.edit(f"Error: {e}")
 
 if __name__ == "__main__":
+    # ওয়েব সার্ভার ব্যাকগ্রাউন্ডে চালু করা হচ্ছে
+    Thread(target=run_web).start()
     bot.run()
     
