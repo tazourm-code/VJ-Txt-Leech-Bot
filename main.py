@@ -19,7 +19,7 @@ bot = Client(
 
 @bot.on_message(filters.command(["start"]))
 async def start(bot, m):
-    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\nআমি আপনার অটো-ডাউনলোডার বট।\n\n✅ সরাসরি লিঙ্ক দিলে ৩৬০পি-তে ডাউনলোড হবে।\n✅ অথবা /upload কমান্ড দিয়ে .TXT ফাইল পাঠান।</b>")
+    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\nএটি একটি প্রিমিয়াম অল-ইন-ওয়ান ডাউনলোডার।\n\n✅ সাপোর্ট: Bunny Net, Vimeo, YouTube, FB.\n✅ ফিচার: অটো ৩৬০পি এবং হাই-স্পিড ডাউনলোড।\n✅ /upload কমান্ড দিয়ে .TXT ফাইল পাঠান।</b>")
 
 @bot.on_message(filters.command("stop"))
 async def stop_handler(_, m):
@@ -30,18 +30,31 @@ async def stop_handler(_, m):
 async def direct_download(bot, m):
     url = m.text.strip()
     if not url.startswith("http"): return
-    msg = await m.reply_text("⚡ **লিঙ্ক প্রসেস করছি...**")
+    msg = await m.reply_text("🔎 **লিঙ্ক যাচাই করছি...**")
     
     name = f"video_{int(time.time())}"
     
-    # Header Setup
-    headers = '--user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36" '
-    if "b-cdn.net" in url or "iframe.mediadelivery.net" in url:
-        headers += '--referer "https://iframe.mediadelivery.net/" '
-    elif "vimeo" in url:
-        headers += '--referer "https://vimeo.com/" '
+    # --- অ্যাডভান্সড হেডার লজিক (যা সব প্ল্যাটফর্ম সাপোর্ট করায়) ---
+    headers = [
+        '--user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"',
+        '--no-check-certificate',
+        '--geo-bypass',
+        '--add-header "Accept: */*"',
+        '--add-header "Accept-Language: en-US,en;q=0.9"'
+    ]
     
-    cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {headers} "{url}" -o "{name}.mp4"'
+    # প্ল্যাটফর্ম চেনা এবং সঠিক Referer সেট করা
+    if "b-cdn.net" in url or "mediadelivery.net" in url or "iframe.mediadelivery.net" in url:
+        headers.append('--referer "https://iframe.mediadelivery.net/"')
+    elif "vimeo" in url:
+        headers.append('--referer "https://vimeo.com/"')
+    elif "youtube" in url or "youtu.be" in url:
+        headers.append('--referer "https://www.youtube.com/"')
+    
+    header_str = " ".join(headers)
+    
+    # ৩৬০পি ফরম্যাট এবং সিকিউরিটি হেডারসহ কমান্ড
+    cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {header_str} "{url}" -o "{name}.mp4"'
     
     try:
         await msg.edit_text("📥 **ডাউনলোড হচ্ছে (360p)...**")
@@ -51,7 +64,7 @@ async def direct_download(bot, m):
             await msg.edit_text("✅ **ডাউনলোড শেষ! এখন আপলোড হচ্ছে...**")
             await helper.send_vid(bot, m, f"🎬 **Owner:** @TG_Classes", res_file, "no", name, msg)
         else:
-            await msg.edit_text("❌ ফাইলটি পাওয়া যায়নি।")
+            await msg.edit_text("❌ লিঙ্কটি প্রোটেক্টেড অথবা কাজ করছে না।")
     except Exception as e:
         await msg.edit_text(f"❌ এরর: `{str(e)[:150]}`")
 
@@ -65,16 +78,25 @@ async def upload_file(bot, m):
         
         with open(x, "r") as f:
             content = f.read().split("\n")
-        links = [i.split("://", 1) for i in content if "://" in i]
+        
+        # খালি লাইন বাদ দিয়ে লিঙ্ক ফিল্টার করা
+        links = []
+        for line in content:
+            if "://" in line:
+                parts = line.split("://", 1)
+                links.append(parts)
+        
         os.remove(x)
         
-        await editable.edit(f"**টোটাল লিঙ্ক:** {len(links)}\nসবগুলো অটো ৩৬০পি-তে ডাউনলোড শুরু হচ্ছে...")
+        await editable.edit(f"**টোটাল লিঙ্ক:** {len(links)}\nসবগুলো অটো ৩৬০পি-তে প্রসেস হচ্ছে...")
         
         for i in range(len(links)):
             try:
                 n, u = links[i][0].strip(), "https://" + links[i][1].strip()
                 out = f"{str(i+1).zfill(3)}) {n}"[:50]
-                h = '--referer "https://iframe.mediadelivery.net/" ' if "b-cdn.net" in u else ""
+                
+                # লুপের ভেতরেও Bunny Net বাইপাস লজিক
+                h = '--referer "https://iframe.mediadelivery.net/" ' if "b-cdn.net" in u or "mediadelivery.net" in u else ""
                 cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {h} "{u}" -o "{out}.mp4"'
                 
                 p = await m.reply_text(f"📥 ডাউনলোড হচ্ছে: {n}")
