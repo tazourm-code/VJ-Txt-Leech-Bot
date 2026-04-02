@@ -1,7 +1,6 @@
 # Don't Remove Credit Tg - @VJ_Bots
 FROM python:3.10-slim
 
-# প্রয়োজনীয় সিস্টেম প্যাকেজ ইনস্টল
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     aria2 \
@@ -12,11 +11,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY . .
 
-# ডিপেন্ডেন্সি ইনস্টল
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn flask
 
-# পোর্ট এক্সপোজ করা (Render-এর জন্য)
-EXPOSE 10000
-
-# গানির্কন এবং মেইন ফাইল একসাথে রান করা
-CMD gunicorn app:app --bind 0.0.0.0:10000 & python3 main.py
+# পোর্ট সচল রাখতে সরাসরি ১০০০০ বাইন্ড করা হয়েছে
+CMD gunicorn app:app --bind 0.0.0.0:10000 --workers 1 --threads 1 & python3 main.py
