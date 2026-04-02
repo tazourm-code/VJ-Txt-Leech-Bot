@@ -5,7 +5,7 @@ from pyromod import listen
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-# বত অবজেক্ট ডিফাইন করা (এরর ফিক্স)
+# বট অবজেক্ট ডিফাইন
 bot = Client(
     "bot",
     api_id=API_ID,
@@ -37,6 +37,7 @@ async def direct_download(bot, m):
     elif "vimeo" in url:
         headers += '--referer "https://vimeo.com/" '
     
+    # ৩৬০পি ফরম্যাট এবং হেডারসহ yt-dlp কমান্ড
     cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {headers} "{url}" -o "{name}.mp4"'
     
     try:
@@ -54,30 +55,35 @@ async def direct_download(bot, m):
 @bot.on_message(filters.command(["upload"]))
 async def upload_file(bot, m):
     editable = await m.reply_text('𝕤ᴇɴᴅ ᴛxᴛ ғɪʟᴇ ⚡️')
-    input_msg = await bot.listen(editable.chat.id)
-    x = await input_msg.download()
-    await input_msg.delete(True)
-    
-    with open(x, "r") as f:
-        content = f.read().split("\n")
-    links = [i.split("://", 1) for i in content if "://" in i]
-    os.remove(x)
-    
-    await editable.edit(f"**টোটাল লিঙ্ক:** {len(links)}\nসবগুলো অটো ৩৬০পি-তে ডাউনলোড শুরু হচ্ছে...")
-    
-    for i in range(len(links)):
-        try:
-            n, u = links[i][0].strip(), "https://" + links[i][1].strip()
-            out = f"{str(i+1).zfill(3)}) {n}"[:50]
-            headers = '--referer "https://iframe.mediadelivery.net/" ' if "b-cdn.net" in u else ""
-            cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {headers} "{u}" -o "{out}.mp4"'
-            
-            p = await m.reply_text(f"📥 ডাউনলোড হচ্ছে: {n}")
-            res = await helper.download_video(u, cmd, out)
-            await helper.send_vid(bot, m, f"🎬 **Name:** {n}\n👤 **Owner:** @TG_Classes", res, "no", out, p)
-        except: continue
+    try:
+        input_msg = await bot.listen(editable.chat.id)
+        x = await input_msg.download()
+        await input_msg.delete(True)
+        
+        with open(x, "r") as f:
+            content = f.read().split("\n")
+        links = [i.split("://", 1) for i in content if "://" in i]
+        os.remove(x)
+        
+        await editable.edit(f"**টোটাল লিঙ্ক:** {len(links)}\nসবগুলো অটো ৩৬০পি-তে ডাউনলোড শুরু হচ্ছে...")
+        
+        for i in range(len(links)):
+            try:
+                n, u = links[i][0].strip(), "https://" + links[i][1].strip()
+                out = f"{str(i+1).zfill(3)}) {n}"[:50]
+                headers = '--referer "https://iframe.mediadelivery.net/" if "b-cdn.net" in u else ""'
+                cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {headers} "{u}" -o "{out}.mp4"'
+                
+                p = await m.reply_text(f"📥 ডাউনলোড হচ্ছে: {n}")
+                res = await helper.download_video(u, cmd, out)
+                await helper.send_vid(bot, m, f"🎬 **Name:** {n}\n👤 **Owner:** @TG_Classes", res, "no", out, p)
+            except: continue
+    except Exception as e:
+        await editable.edit(f"Error: {e}")
     
     await m.reply_text("**সব কাজ শেষ! 😎**")
 
-bot.run()
+if __name__ == "__main__":
+    bot.run()
+    
             
