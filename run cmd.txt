@@ -1,1 +1,1 @@
-gunicorn app:app & python3 main.py
+gunicorn app:app --bind 0.0.0.0:10000 --workers 1 --threads 1 & python3 main.py
