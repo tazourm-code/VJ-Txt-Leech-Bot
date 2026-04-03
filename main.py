@@ -17,19 +17,21 @@ def hello_world():
     return 'Bot is Running - Tech VJ'
 
 def run_web():
+    # সরাসরি ১০০০০ পোর্টে রান হবে যাতে রেন্ডার খুঁজে পায়
     app.run(host='0.0.0.0', port=10000)
 
 bot = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 @bot.on_message(filters.command(["start"]))
 async def start(bot, m):
-    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\nএটি আপনার প্রিমিয়াম ডাউনলোডার।\n\n✅ লাইভ প্রোগ্রেস বার একটিভ।\n✅ অটো ৩৬০পি (360p) ডাউনলোড হবে।\n✅ /upload দিয়ে .TXT ফাইল পাঠান।</b>")
+    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\n✅ লাইভ প্রোগ্রেস বার সচল।\n✅ অটো ৩৬০পি ডাউনলোড হবে।\n✅ /upload দিয়ে .TXT ফাইল পাঠান।</b>")
 
 @bot.on_message(filters.text & ~filters.command(["start", "stop", "upload", "up"]))
 async def direct_download(bot, m):
     url = m.text.strip()
     if not url.startswith("http"): return
     
+    # শুরুতে এই মেসেজটি যাবে এবং পরে এটিই এডিট হয়ে ডাউনলোড বার হবে
     msg = await m.reply_text("🔎 **লিঙ্ক চেক করছি...**")
     name = f"video_{int(time.time())}"
     
@@ -46,17 +48,18 @@ async def direct_download(bot, m):
     
     header_str = " ".join(headers)
     
-    # অটো ৩৬০পি এবং প্রোগ্রেস বার সাপোর্ট করার জন্য কমান্ড
+    # অটো ৩৬০পি নিশ্চিত করার কমান্ড
     cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {header_str} "{url}" -o "{name}.mp4"'
     
     try:
-        # প্রোগ্রেস বার এডিট করার জন্য msg পাস করা হয়েছে
+        # এখানে 'msg' পাঠানো হয়েছে যাতে core.py সরাসরি এটি এডিট করতে পারে
         res_file = await helper.download_video(url, cmd, name, msg)
         
         if res_file and os.path.exists(res_file):
+            # ভিডিও পাঠানোর সময়ও প্রোগ্রেস বার কাজ করবে
             await helper.send_vid(bot, m, f"🎬 **Owner:** @TG_Classes", res_file, "no", name, msg)
         else:
-            await msg.edit_text("❌ ডাউনলোড ব্যর্থ হয়েছে। লিঙ্কটি চেক করুন।")
+            await msg.edit_text("❌ ডাউনলোড ব্যর্থ হয়েছে।")
     except Exception as e:
         await msg.edit_text(f"❌ এরর: `{str(e)[:150]}`")
 
@@ -84,6 +87,7 @@ async def upload_file(bot, m):
                 cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {h} "{u}" -o "{out}.mp4"'
                 
                 p = await m.reply_text(f"📥 ডাউনলোড হচ্ছে: {n}")
+                # আপলোডের সময়ও msg/p অবজেক্ট পাস করা হয়েছে
                 res = await helper.download_video(u, cmd, out, p)
                 await helper.send_vid(bot, m, f"🎬 **Name:** {n}\n👤 **Owner:** @TG_Classes", res, "no", out, p)
             except: continue
@@ -91,6 +95,7 @@ async def upload_file(bot, m):
         await editable.edit(f"Error: {e}")
 
 if __name__ == "__main__":
+    # ব্যাকগ্রাউন্ডে ওয়েব সার্ভার চালু রাখা
     Thread(target=run_web).start()
     bot.run()
-                
+    
