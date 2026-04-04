@@ -17,7 +17,6 @@ def hello_world():
     return 'Bot is Running'
 
 def run_web():
-    # রেন্ডারের পোর্ট ভেজাল ফিক্স করতে এই লজিকটি সেরা
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
@@ -25,7 +24,7 @@ bot = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 @bot.on_message(filters.command(["start"]))
 async def start(bot, m):
-    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\n✅ পোর্ট এবং আর্গুমেন্ট এরর ফিক্সড।\n✅ লাইভ প্রোগ্রেস বার সচল।\n✅ অটো ৩৬০পি ডাউনলোড হবে।</b>")
+    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\n✅ Shikho + Hulkenstein (EdgeCourse) ফিক্সড।\n✅ লাইভ প্রোগ্রেস বার সচল।\n✅ অটো ৩৬০পি ডাউনলোড হবে।</b>")
 
 @bot.on_message(filters.text & ~filters.command(["start", "stop", "upload", "up"]))
 async def direct_download(bot, m):
@@ -40,31 +39,47 @@ async def direct_download(bot, m):
         '--no-check-certificate', '--geo-bypass'
     ]
     
-    # Referer Logic (EdgeCourse + Vimeo + Others)
+    # ⚡️ All-in-One Referer Logic (Shikho + Hulk + Vimeo)
     if "b-cdn.net" in url or "mediadelivery.net" in url:
         headers.append('--referer "https://iframe.mediadelivery.net/"')
+        
     elif "edgecoursebd.com" in url or "player.vimeo.com" in url:
+        # এটি Hulkenstein/EdgeCourse ফিক্স করবে
         headers.append('--referer "https://edgecoursebd.com/"')
+        
+    elif "shikho" in url or "tenbytecdn.com" in url:
+        # এটিই শিখোর সেই সমাধান যা আগে আপনার কাজ করত
+        headers.append('--referer "https://shikho.com/"')
+        headers.append('--add-header "Origin: https://shikho.com"')
+        
     elif "vimeo" in url:
         headers.append('--referer "https://vimeo.com/"')
     
     header_str = " ".join(headers)
+    
+    # ৩৬০পি ডাউনলোড কমান্ড
     cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {header_str} "{url}" -o "{name}.mp4"'
     
     try:
-        # এখানে ৪টি আর্গুমেন্ট (msg সহ) পাঠানো হচ্ছে
+        # core.py তে ৪টি আর্গুমেন্ট (msg সহ) যাচ্ছে
         res_file = await helper.download_video(url, cmd, name, msg)
         
         if res_file and os.path.exists(res_file):
             await helper.send_vid(bot, m, f"🎬 **Owner:** @TG_Classes", res_file, "no", name, msg)
         else:
-            await msg.edit_text("❌ ডাউনলোড ব্যর্থ হয়েছে।")
+            # ৩৬০পি না পেলে বেস্ট কোয়ালিটি ট্রাই করবে
+            cmd_alt = f'yt-dlp -f "best" {header_str} "{url}" -o "{name}.mp4"'
+            res_file = await helper.download_video(url, cmd_alt, name, msg)
+            if res_file and os.path.exists(res_file):
+                await helper.send_vid(bot, m, f"🎬 **Owner:** @TG_Classes", res_file, "no", name, msg)
+            else:
+                await msg.edit_text("❌ ডাউনলোড ব্যর্থ হয়েছে।")
     except Exception as e:
         await msg.edit_text(f"❌ এরর: `{str(e)[:150]}`")
 
 if __name__ == "__main__":
     t = Thread(target=run_web)
-    t.daemon = True # মেইন বট বন্ধ হলে এটিও বন্ধ হবে
+    t.daemon = True
     t.start()
     bot.run()
-                            
+    
