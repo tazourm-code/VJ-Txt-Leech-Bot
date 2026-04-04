@@ -6,11 +6,12 @@ from pyrogram import Client, filters
 from flask import Flask
 from threading import Thread
 
-# আপনার ক্রেডেনশিয়ালস
+# সরাসরি আপনার আইডিগুলো এখানে বসিয়ে দেওয়া হয়েছে
 API_ID = 32681138
 API_HASH = "c809aa4537888310e0f29e49afe13466"
 BOT_TOKEN = "8752628916:AAGeJwdqtWIuwZImPK_H6VwEDuJwgdOqTDw"
 
+# Render-কে সচল রাখতে এবং 502 Bad Gateway ফিক্স করতে ছোট ওয়েব সার্ভার
 app = Flask(__name__)
 @app.route('/')
 def hello_world():
@@ -24,42 +25,46 @@ bot = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 @bot.on_message(filters.command(["start"]))
 async def start(bot, m):
-    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\n✅ লাইভ প্রোগ্রেস বার সচল।\n✅ অটো ৩৬০পি ডাউনলোড হবে।\n✅ /upload দিয়ে .TXT ফাইল পাঠান।</b>")
+    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\nএটি আপনার প্রিমিয়াম ডাউনলোডার।\n\n✅ সব প্ল্যাটফর্ম এখন আনলক করা।\n✅ অটো ৩৬০পি ডাউনলোড হবে।\n✅ /upload দিয়ে .TXT ফাইল পাঠান।</b>")
 
+# এই ফিল্টারটি নিশ্চিত করবে যে ২ বার মেসেজ আসবে না
 @bot.on_message(filters.text & ~filters.command(["start", "stop", "upload", "up"]))
 async def direct_download(bot, m):
     url = m.text.strip()
     if not url.startswith("http"): return
     
-    # শুরুতে এই মেসেজটি যাবে এবং পরে এটিই এডিট হয়ে ডাউনলোড বার হবে
     msg = await m.reply_text("🔎 **লিঙ্ক চেক করছি...**")
     name = f"video_{int(time.time())}"
     
+    # পাওয়ারফুল হেডার (সব প্ল্যাটফর্ম বাইপাস করতে)
     headers = [
         '--user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"',
         '--no-check-certificate',
         '--geo-bypass'
     ]
     
+    # সঠিক Referer লজিক
     if "b-cdn.net" in url or "mediadelivery.net" in url:
         headers.append('--referer "https://iframe.mediadelivery.net/"')
     elif "vimeo" in url:
         headers.append('--referer "https://vimeo.com/"')
+    elif "shikho" in url:
+        headers.append('--referer "https://shikho.com/"')
     
     header_str = " ".join(headers)
     
-    # অটো ৩৬০পি নিশ্চিত করার কমান্ড
+    # ৩৬০পি রেজোলিউশন লজিক
     cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {header_str} "{url}" -o "{name}.mp4"'
     
     try:
-        # এখানে 'msg' পাঠানো হয়েছে যাতে core.py সরাসরি এটি এডিট করতে পারে
-        res_file = await helper.download_video(url, cmd, name, msg)
+        await msg.edit_text("📥 **ডাউনলোড হচ্ছে (360p)...**")
+        res_file = await helper.download_video(url, cmd, name)
         
-        if res_file and os.path.exists(res_file):
-            # ভিডিও পাঠানোর সময়ও প্রোগ্রেস বার কাজ করবে
+        if os.path.exists(res_file):
+            await msg.edit_text("✅ **ডাউনলোড শেষ! এখন আপলোড হচ্ছে...**")
             await helper.send_vid(bot, m, f"🎬 **Owner:** @TG_Classes", res_file, "no", name, msg)
         else:
-            await msg.edit_text("❌ ডাউনলোড ব্যর্থ হয়েছে।")
+            await msg.edit_text("❌ লিঙ্কটি প্রোটেক্টেড অথবা কাজ করছে না।")
     except Exception as e:
         await msg.edit_text(f"❌ এরর: `{str(e)[:150]}`")
 
@@ -87,15 +92,14 @@ async def upload_file(bot, m):
                 cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {h} "{u}" -o "{out}.mp4"'
                 
                 p = await m.reply_text(f"📥 ডাউনলোড হচ্ছে: {n}")
-                # আপলোডের সময়ও msg/p অবজেক্ট পাস করা হয়েছে
-                res = await helper.download_video(u, cmd, out, p)
+                res = await helper.download_video(u, cmd, out)
                 await helper.send_vid(bot, m, f"🎬 **Name:** {n}\n👤 **Owner:** @TG_Classes", res, "no", out, p)
             except: continue
     except Exception as e:
         await editable.edit(f"Error: {e}")
 
 if __name__ == "__main__":
-    # ব্যাকগ্রাউন্ডে ওয়েব সার্ভার চালু রাখা
+    # ওয়েব সার্ভার ব্যাকগ্রাউন্ডে চালু করা হচ্ছে
     Thread(target=run_web).start()
     bot.run()
-    
+            
