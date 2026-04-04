@@ -1,5 +1,6 @@
 import os
 
-API_ID = int(os.environ.get("API_ID", "32681138"))
-API_HASH = os.environ.get("API_HASH", "c809aa4537888310e0f29e49afe13466")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8752628916:AAGeJwdqtWIuwZImPK_H6VwEDuJwgdOqTDw")
+# আপনার নতুন API ID, HASH এবং BOT TOKEN বসানো হয়েছে
+API_ID = int(os.environ.get("API_ID", "30441200"))
+API_HASH = os.environ.get("API_HASH", "8dc139cb6fb574e7f9eded43e19e0540")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "8628695022:AAHpFEYJT7e9ybTzSC8nnsBFwO7I7_iO920")
