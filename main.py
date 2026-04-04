@@ -6,21 +6,26 @@ from pyrogram import Client, filters
 from flask import Flask
 from threading import Thread
 
+# আপনার ক্রেডেনশিয়ালস
 API_ID = 32681138
 API_HASH = "c809aa4537888310e0f29e49afe13466"
 BOT_TOKEN = "8752628916:AAGeJwdqtWIuwZImPK_H6VwEDuJwgdOqTDw"
 
 app = Flask(__name__)
 @app.route('/')
-def hello_world(): return 'Bot is Running - Tech VJ'
+def hello_world():
+    return 'Bot is Running'
 
-def run_web(): app.run(host='0.0.0.0', port=10000)
+def run_web():
+    # রেন্ডারের পোর্ট ভেজাল ফিক্স করতে এই লজিকটি সেরা
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
 
 bot = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 @bot.on_message(filters.command(["start"]))
 async def start(bot, m):
-    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\n✅ EdgeCourseBD + Vimeo আপডেট করা হয়েছে।\n✅ অটো ৩৬০পি ডাউনলোড হবে।</b>")
+    await m.reply_text(f"<b>হ্যালো {m.from_user.mention} 👋\n\n✅ পোর্ট এবং আর্গুমেন্ট এরর ফিক্সড।\n✅ লাইভ প্রোগ্রেস বার সচল।\n✅ অটো ৩৬০পি ডাউনলোড হবে।</b>")
 
 @bot.on_message(filters.text & ~filters.command(["start", "stop", "upload", "up"]))
 async def direct_download(bot, m):
@@ -32,35 +37,34 @@ async def direct_download(bot, m):
     
     headers = [
         '--user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"',
-        '--no-check-certificate',
-        '--geo-bypass'
+        '--no-check-certificate', '--geo-bypass'
     ]
     
-    # Updated Referer Logic for EdgeCourseBD & Vimeo
+    # Referer Logic (EdgeCourse + Vimeo + Others)
     if "b-cdn.net" in url or "mediadelivery.net" in url:
         headers.append('--referer "https://iframe.mediadelivery.net/"')
     elif "edgecoursebd.com" in url or "player.vimeo.com" in url:
         headers.append('--referer "https://edgecoursebd.com/"')
     elif "vimeo" in url:
         headers.append('--referer "https://vimeo.com/"')
-    elif "shikho" in url:
-        headers.append('--referer "https://shikho.com/"')
     
     header_str = " ".join(headers)
     cmd = f'yt-dlp -f "bestvideo[height<=360]+bestaudio/best[height<=360]/best" {header_str} "{url}" -o "{name}.mp4"'
     
     try:
-        # প্রোগ্রেস বারের জন্য msg পাস করা হলো
+        # এখানে ৪টি আর্গুমেন্ট (msg সহ) পাঠানো হচ্ছে
         res_file = await helper.download_video(url, cmd, name, msg)
         
         if res_file and os.path.exists(res_file):
             await helper.send_vid(bot, m, f"🎬 **Owner:** @TG_Classes", res_file, "no", name, msg)
         else:
-            await msg.edit_text("❌ ডাউনলোড ব্যর্থ। লিঙ্কটি প্রোটেক্টেড হতে পারে।")
+            await msg.edit_text("❌ ডাউনলোড ব্যর্থ হয়েছে।")
     except Exception as e:
         await msg.edit_text(f"❌ এরর: `{str(e)[:150]}`")
 
 if __name__ == "__main__":
-    Thread(target=run_web).start()
+    t = Thread(target=run_web)
+    t.daemon = True # মেইন বট বন্ধ হলে এটিও বন্ধ হবে
+    t.start()
     bot.run()
-    
+                            
