@@ -6,10 +6,10 @@ from pyrogram import Client, filters
 from flask import Flask
 from threading import Thread
 
-# আপনার ক্রেডেনশিয়ালস
-API_ID = 32681138
-API_HASH = "c809aa4537888310e0f29e49afe13466"
-BOT_TOKEN = "8752628916:AAGeJwdqtWIuwZImPK_H6VwEDuJwgdOqTDw"
+# আপনার নতুন ক্রেডেনশিয়ালস বসানো হয়েছে
+API_ID = 30441200
+API_HASH = "8dc139cb6fb574e7f9eded43e19e0540"
+BOT_TOKEN = "8628695022:AAHpFEYJT7e9ybTzSC8nnsBFwO7I7_iO920"
 
 app = Flask(__name__)
 @app.route('/')
@@ -44,11 +44,9 @@ async def direct_download(bot, m):
         headers.append('--referer "https://iframe.mediadelivery.net/"')
         
     elif "edgecoursebd.com" in url or "player.vimeo.com" in url:
-        # এটি Hulkenstein/EdgeCourse ফিক্স করবে
         headers.append('--referer "https://edgecoursebd.com/"')
         
     elif "shikho" in url or "tenbytecdn.com" in url:
-        # এটিই শিখোর সেই সমাধান যা আগে আপনার কাজ করত
         headers.append('--referer "https://shikho.com/"')
         headers.append('--add-header "Origin: https://shikho.com"')
         
